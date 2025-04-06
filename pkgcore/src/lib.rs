@@ -1,21 +1,17 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 
-pub fn calibrate(getter: fn() -> usize, max_count: usize, interval: usize) -> usize {
-    let mut curr_frame = 0;
+pub fn calibrate_min_sleep(
+    getter: &mut impl FnMut() -> usize,
+    sleep: &impl Fn(),
+    max_count: usize,
+) -> usize {
     let mut cached_count = 0;
     let mut cache_sum = 0;
 
     // loop and collect the necessary data for the calibration
     while cached_count < max_count {
-        // wait for the interval to go through
-        if interval > curr_frame {
-            curr_frame += 1;
-            continue;
-        }
-
-        // reset the frame
-        curr_frame = 0;
+        sleep();
 
         // one more value cached
         cache_sum += getter();
@@ -26,8 +22,19 @@ pub fn calibrate(getter: fn() -> usize, max_count: usize, interval: usize) -> us
     cache_sum / cached_count
 }
 
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+pub fn calibrate_min_frame(
+    getter: &mut impl FnMut() -> usize,
+    max_count: usize,
+    interval: usize,
+) -> usize {
+    let sleep = || {
+        let mut curr_frame = 0;
+        while curr_frame < interval {
+            curr_frame += 1;
+        }
+    };
+
+    calibrate_min_sleep(getter, &sleep, max_count)
 }
 
 #[cfg(test)]
@@ -35,8 +42,61 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    fn test_calibrate_min_frame() {
+        struct SpecCase {
+            getter: [usize; 5],
+            max_count: usize,
+            interval: usize,
+            result: usize,
+        }
+
+        let cases = [
+            SpecCase {
+                getter: [1, 1, 1, 1, 1],
+                max_count: 5,
+                interval: 10,
+                result: 1,
+            },
+            SpecCase {
+                getter: [5, 2, 1, 3, 1],
+                max_count: 5,
+                interval: 1,
+                result: 2,
+            },
+            SpecCase {
+                getter: [5, 5, 1, 3, 2],
+                max_count: 5,
+                interval: 20,
+                result: 3,
+            },
+            SpecCase {
+                getter: [5, 5, 1, 3, 2],
+                max_count: 5,
+                interval: 2,
+                result: 3,
+            },
+            SpecCase {
+                getter: [1, 2, 3, 4, 5],
+                max_count: 5,
+                interval: 2,
+                result: 3,
+            },
+            SpecCase {
+                getter: [1, 0, 0, 0, 0],
+                max_count: 5,
+                interval: 1,
+                result: 0,
+            },
+        ];
+        for case in cases.iter() {
+            let mut count = 0;
+            let mut getter = || {
+                count += 1;
+                case.getter[count - 1]
+            };
+
+            let result = calibrate_min_frame(&mut getter, case.max_count, case.interval);
+            assert_eq!(result, case.result);
+        }
     }
 }
