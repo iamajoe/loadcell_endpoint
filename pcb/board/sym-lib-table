@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "rp2040-zero")(type "KiCad")(uri "${KIPRJMOD}/../libs/RP2040-Zero-Kicad/rp2040-zero.kicad_sym")(options "")(descr ""))
+  (lib (name "custom")(type "KiCad")(uri "/Users/joel/work/src/local/loadcell_endpoint/pcb/libs/custom.kicad_sym")(options "")(descr ""))
+)

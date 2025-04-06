@@ -1,0 +1,27 @@
+[package]
+name = "loadcell_endpoint"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+embassy-rp = { version = "0.4.0", features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl", "rp2040"] }
+embassy-executor = { version = "0.7.0", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"] }
+embassy-time = { version = "0.4.0", features = ["defmt", "defmt-timestamp-uptime"] }
+
+defmt = "0.3"
+defmt-rtt = "0.4.0"
+# cortex-m = {version = "0.7.7", features = ["critical-section-single-core"]}
+cortex-m = { version = "0.7.7", features = ["inline-asm"] }
+# cortex-m = "0.7.7"
+cortex-m-rt = "0.7.3"
+panic-probe = "0.3.1"
+
+pkgcore = { path = "../pkgcore" }
+
+[patch.crates-io]
+embassy-rp = { git = "https://github.com/embassy-rs/embassy", rev = "a137a160671d3ede48519e5faf316f31f6f6cbd3" }
+embassy-executor = { git = "https://github.com/embassy-rs/embassy", rev = "a137a160671d3ede48519e5faf316f31f6f6cbd3" }
+embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "a137a160671d3ede48519e5faf316f31f6f6cbd3" }
+
+[profile.release]
+debug = 2
