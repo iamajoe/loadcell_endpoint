@@ -752,7 +752,6 @@ dependencies = [
  "embassy-time",
  "loadcell",
  "panic-probe",
- "pkgcore",
 ]
 
 [[package]]
@@ -949,10 +948,6 @@ dependencies = [
  "quote",
  "syn",
 ]
-
-[[package]]
-name = "pkgcore"
-version = "0.1.0"
 
 [[package]]
 name = "precomputed-hash"

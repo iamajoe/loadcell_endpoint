@@ -16,7 +16,7 @@ cortex-m = { version = "0.7.7", features = ["inline-asm"] }
 cortex-m-rt = "0.7.3"
 panic-probe = "0.3.1"
 
-pkgcore = { path = "../pkgcore" }
+# pkgcore = { path = "../pkgcore" }
 loadcell = "0.3.0"
 
 [patch.crates-io]
