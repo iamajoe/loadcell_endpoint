@@ -17,6 +17,7 @@ cortex-m-rt = "0.7.3"
 panic-probe = "0.3.1"
 
 pkgcore = { path = "../pkgcore" }
+loadcell = "0.3.0"
 
 [patch.crates-io]
 embassy-rp = { git = "https://github.com/embassy-rs/embassy", rev = "a137a160671d3ede48519e5faf316f31f6f6cbd3" }
