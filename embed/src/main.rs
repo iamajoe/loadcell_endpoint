@@ -3,16 +3,16 @@
 
 use embassy_executor::Spawner;
 use embassy_rp::gpio;
-use embassy_time::Timer;
+use embassy_time::{Delay, Timer};
 use gpio::{Input, Level, Output, Pull};
+use loadcell::{LoadCell, hx711};
 use {defmt_rtt as _, panic_probe as _};
 
-extern crate pkgcore;
+// extern crate pkgcore;
 
 const FRAME_TIME: u64 = 100;
 const DEADZONE: f32 = 0.1;
-const CALIBRATE_MILLIS: u64 = 500;
-const CALIBRATE_COUNT: usize = 20;
+const CALIBRATE_MIN: f32 = 0.0;
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -24,17 +24,15 @@ async fn main(_spawner: Spawner) {
 
     let endstop_input = Input::new(peripherals.PIN_7, Pull::Up); // GPIO7; PIN 10
 
-    let _hx711_sck = Output::new(peripherals.PIN_8, Level::Low); // GPIO8; PIN 11
-    let _hx711_dt = Input::new(peripherals.PIN_14, Pull::None); // GPIO14; PIN 19
+    let hx711_sck = Output::new(peripherals.PIN_8, Level::Low); // GPIO8; PIN 11
+    let hx711_dt = Input::new(peripherals.PIN_14, Pull::None); // GPIO14; PIN 19
 
-    // calibrate
-    let mut calibrate_getter = || 0.0;
-    let calibrate_sleep = || async {
-        Timer::after_millis(CALIBRATE_MILLIS).await;
-    };
-    let load_min =
-        pkgcore::calibrate_min_sleep(&mut calibrate_getter, &calibrate_sleep, CALIBRATE_COUNT)
-            .await;
+    // create the load sensor
+    let delay = Delay {};
+    let mut load_sensor = hx711::HX711::new(hx711_sck, hx711_dt, delay);
+    // zero the readings
+    load_sensor.tare(16);
+    load_sensor.set_scale(1.0);
 
     loop {
         board_led.set_low();
@@ -47,11 +45,14 @@ async fn main(_spawner: Spawner) {
             output_a.set_high();
         }
 
-        // TODO: need to get the value from the adc but how? what to do with dt/sck?
-        let num = 0.0;
-        if pkgcore::is_num_over(num, load_min, DEADZONE) {
-            board_led.set_high();
-            output_b.set_high();
+        // wait for the load sensor
+        if load_sensor.is_ready() {
+            let reading = load_sensor.read_scaled().unwrap_or(0.0);
+            let is_over = reading - DEADZONE >= CALIBRATE_MIN;
+            if is_over {
+                board_led.set_high();
+                output_b.set_high();
+            }
         }
 
         // wait for the frame time to go through
